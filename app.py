@@ -16,13 +16,14 @@ def safe_generate_content(prompt, max_retries=3, sleep_seconds=5):
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash-lite-preview-06-17",
+                model="gemini-2.5-flash",
                 contents=types.Content(role="user", parts=[types.Part(text=prompt)]),
                 config=types.GenerateContentConfig()
             )
             return response.candidates[0].content.parts[0].text.strip()
         except ClientError as e:
-            if "RESOURCE_EXHAUSTED" in str(e):
+            if e.code == 429:
+                print(f"觸發頻率限制，等待 {sleep_seconds} 秒後重試...")
                 time.sleep(sleep_seconds)
             else:
                 raise e
